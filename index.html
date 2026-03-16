@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>成长可视化 · 课程与攀岩</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <h1>成长可视化</h1>
+      <p class="tagline">课程学习 · 攀岩记录 · 数据表格</p>
+      <nav class="tabs">
+        <button type="button" class="tab active" data-tab="courses">课程进度</button>
+        <button type="button" class="tab" data-tab="climbing">攀岩记录</button>
+        <button type="button" class="tab" data-tab="tables">数据表格</button>
+      </nav>
+    </header>
+
+    <main class="content">
+      <!-- 课程学习进度 -->
+      <section id="courses" class="panel active">
+        <div class="panel-header">
+          <h2>课程学习进度</h2>
+          <button type="button" class="btn btn-primary" id="addCourseBtn">+ 添加课程</button>
+        </div>
+        <div class="course-form-wrap" id="courseFormWrap" hidden>
+          <form id="courseForm" class="card form-card">
+            <h3>新增 / 编辑课程</h3>
+            <input type="hidden" id="courseId" />
+            <div class="form-row">
+              <label for="courseName">课程名称</label>
+              <input type="text" id="courseName" required placeholder="例如：CS50x、CS50p" />
+            </div>
+            <div class="form-row">
+              <label for="courseSchedule">课程安排说明（可选）</label>
+              <textarea id="courseSchedule" rows="3" placeholder="每周几、计划章节、截止日期等"></textarea>
+            </div>
+            <div class="form-row">
+              <label for="courseTotal">总项目数（可选）</label>
+              <input type="number" id="courseTotal" min="1" placeholder="例如 10 表示共 10 周/10 个单元" />
+              <p class="form-hint">填了则进度 = 已完成数 ÷ 总项目数（如 1/10 = 10%）；不填则按已添加条目数计算</p>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary">保存</button>
+              <button type="button" class="btn btn-ghost" id="cancelCourseBtn">取消</button>
+            </div>
+          </form>
+        </div>
+        <div class="charts-row">
+          <div class="card chart-card">
+            <h3>各课程完成度</h3>
+            <div class="chart-container">
+              <canvas id="courseBarChart"></canvas>
+            </div>
+          </div>
+          <div class="card chart-card">
+            <h3>整体完成度</h3>
+            <div class="chart-container chart-donut">
+              <canvas id="courseDonutChart"></canvas>
+            </div>
+          </div>
+        </div>
+        <div id="courseCards" class="course-cards"></div>
+      </section>
+
+      <!-- 攀岩记录 -->
+      <section id="climbing" class="panel">
+        <div class="panel-header">
+          <h2>攀岩与训练</h2>
+          <button type="button" class="btn btn-primary" id="addClimbBtn">+ 添加记录</button>
+        </div>
+        <div class="climb-form-wrap" id="climbFormWrap" hidden>
+          <form id="climbForm" class="card form-card form-card-wide">
+            <h3>攀岩 / 训练记录</h3>
+            <input type="hidden" id="climbId" />
+            <div class="form-row">
+              <label for="climbRecordType">记录类型</label>
+              <select id="climbRecordType">
+                <option value="攀岩">攀岩</option>
+                <option value="训练">训练</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <label for="climbDate">日期</label>
+              <input type="date" id="climbDate" required />
+            </div>
+            <div class="form-row form-row-inline" id="climbGradeRow">
+              <label for="climbGrade">难度等级</label>
+              <select id="climbGrade">
+                <option value="V0">V0</option>
+                <option value="V1">V1</option>
+                <option value="V2">V2</option>
+                <option value="V3">V3</option>
+                <option value="V4">V4</option>
+                <option value="V5">V5</option>
+                <option value="V6">V6</option>
+                <option value="V7">V7</option>
+                <option value="5.9">5.9</option>
+                <option value="5.10">5.10</option>
+                <option value="5.11">5.11</option>
+                <option value="5.12">5.12</option>
+              </select>
+            </div>
+            <div class="form-row" id="climbResultRow">
+              <label for="climbResult">结果</label>
+              <select id="climbResult">
+                <option value="完成">完成</option>
+                <option value="未完成">未完成</option>
+                <option value="尝试中">尝试中</option>
+              </select>
+            </div>
+            <div class="form-row" id="climbTrainingRow" hidden>
+              <label for="climbTrainingContent">训练内容</label>
+              <input type="text" id="climbTrainingContent" placeholder="例如：指力、横移、核心" />
+            </div>
+            <div class="form-row" id="climbDurationRow" hidden>
+              <label for="climbDuration">时长（可选）</label>
+              <input type="text" id="climbDuration" placeholder="例如：1.5 小时" />
+            </div>
+            <div class="form-row">
+              <label for="climbNotes">备注</label>
+              <input type="text" id="climbNotes" placeholder="岩馆、线路名等" />
+            </div>
+            <div class="form-row">
+              <label>视频</label>
+              <div class="video-input-row">
+                <input type="url" id="climbVideoUrl" placeholder="视频链接（B站、YouTube 等）" />
+                <span class="input-or">或</span>
+                <label class="btn btn-secondary btn-file">
+                  <input type="file" id="climbVideoFile" accept="video/*" hidden /> 选择本地视频
+                </label>
+              </div>
+              <p class="form-hint" id="climbVideoHint">已上传的视频仅保存在本浏览器，大小建议 &lt; 50MB</p>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary">保存</button>
+              <button type="button" class="btn btn-ghost" id="cancelClimbBtn">取消</button>
+            </div>
+          </form>
+        </div>
+        <!-- 攀岩/训练安排 -->
+        <div class="card">
+          <div class="panel-header sub">
+            <h3>攀岩 / 训练安排</h3>
+            <button type="button" class="btn btn-secondary btn-sm" id="addPlanBtn">+ 添加计划</button>
+          </div>
+          <div id="planFormWrap" class="plan-form-wrap" hidden>
+            <form id="planForm" class="form-inline">
+              <input type="hidden" id="planId" />
+              <input type="date" id="planDate" required />
+              <select id="planType">
+                <option value="攀岩">攀岩</option>
+                <option value="训练">训练</option>
+              </select>
+              <input type="text" id="planContent" placeholder="计划内容" />
+              <button type="submit" class="btn btn-primary btn-sm">保存</button>
+              <button type="button" class="btn btn-ghost btn-sm" id="cancelPlanBtn">取消</button>
+            </form>
+          </div>
+          <ul id="planList" class="plan-list"></ul>
+        </div>
+        <div class="charts-row">
+          <div class="card chart-card">
+            <h3>按难度统计（攀岩）</h3>
+            <div class="chart-container">
+              <canvas id="climbGradeChart"></canvas>
+            </div>
+          </div>
+          <div class="card chart-card">
+            <h3>近期记录趋势</h3>
+            <div class="chart-container">
+              <canvas id="climbTrendChart"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <h3>攀岩 / 训练记录列表</h3>
+          <ul id="climbList" class="climb-list"></ul>
+        </div>
+      </section>
+
+      <!-- 数据表格 -->
+      <section id="tables" class="panel">
+        <div class="panel-header">
+          <h2>数据表格</h2>
+          <div class="table-actions">
+            <select id="tableSource">
+              <option value="courses">课程进度表（含作业/视频/练习）</option>
+              <option value="climbing">攀岩/训练记录表</option>
+              <option value="plans">攀岩/训练安排表</option>
+            </select>
+            <button type="button" class="btn btn-secondary" id="exportTableBtn">导出 CSV</button>
+          </div>
+        </div>
+        <div class="card table-card">
+          <div class="table-wrap">
+            <table id="dataTable">
+              <thead id="tableHead"></thead>
+              <tbody id="tableBody"></tbody>
+            </table>
+          </div>
+          <p class="table-hint" id="tableHint"></p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- 课程项目编辑弹层：仅在你点击「添加 作业/视频/练习」或「编辑」时打开，可点取消/遮罩/× 关闭 -->
+  <div id="courseItemModal" class="modal" hidden aria-hidden="true">
+    <div class="modal-content card">
+      <div class="modal-header">
+        <h3 id="courseItemModalTitle">添加 作业/视频/练习</h3>
+        <button type="button" class="modal-close" id="courseItemModalClose" title="关闭">×</button>
+      </div>
+      <form id="courseItemForm">
+        <input type="hidden" id="courseItemCourseId" />
+        <input type="hidden" id="courseItemId" />
+        <div class="form-row">
+          <label for="courseItemUnit">所属项目 / 周（可选）</label>
+          <input type="text" id="courseItemUnit" placeholder="例如 Week 1、第1周，同一项目下可有多个视频/作业/练习" />
+        </div>
+        <div class="form-row">
+          <label for="courseItemType">类型</label>
+          <select id="courseItemType">
+            <option value="作业">作业</option>
+            <option value="视频">视频</option>
+            <option value="练习">练习</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label for="courseItemTitle">名称</label>
+          <input type="text" id="courseItemTitle" required placeholder="例如：Problem Set、Lecture 1" />
+        </div>
+        <div class="form-row">
+          <label for="courseItemDeadline">日期时限 / 截止日期（可选）</label>
+          <input type="date" id="courseItemDeadline" />
+        </div>
+        <div class="form-row form-row-check">
+          <label><input type="checkbox" id="courseItemCompleted" /> 已完成</label>
+        </div>
+        <div class="form-row form-row-check">
+          <label><input type="checkbox" id="courseItemGithub" /> 已上传 GitHub</label>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">保存</button>
+          <button type="button" class="btn btn-ghost" id="courseItemCancelBtn">取消</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
